@@ -19,7 +19,10 @@ import AdminPayments from "./pages/admin/AdminPayments";
 import AdminCertificates from "./pages/admin/AdminCertificates";
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminLayout from "./layouts/AdminLayout";
+import StudentLogin from "./pages/StudentLogin";
+import StudentPayment from "./pages/StudentPayment";
 import { AdminProvider } from "./contexts/AdminContext";
+import { StudentProvider } from "./contexts/StudentContext";
 
 const queryClient = new QueryClient();
 
@@ -27,31 +30,35 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <AdminProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/course/:id" element={<CoursePage />} />
-            <Route path="/certificates" element={<CertificatesPage />} />
-            <Route path="/quizzes" element={<QuizzesPage />} />
-            <Route path="/quiz/:id" element={<QuizPage />} />
-            <Route path="/profile" element={<ProfilePage />} />
-            
-            {/* Admin Routes */}
-            <Route path="/admin/login" element={<AdminLogin />} />
-            <Route path="/admin" element={<AdminLayout />}>
-              <Route index element={<AdminDashboard />} />
-              <Route path="courses" element={<AdminCourses />} />
-              <Route path="students" element={<AdminStudents />} />
-              <Route path="quizzes" element={<AdminQuizzes />} />
-              <Route path="payments" element={<AdminPayments />} />
-              <Route path="certificates" element={<AdminCertificates />} />
-            </Route>
-            
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
+        <StudentProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/course/:id" element={<CoursePage />} />
+              <Route path="/certificates" element={<CertificatesPage />} />
+              <Route path="/quizzes" element={<QuizzesPage />} />
+              <Route path="/quiz/:id" element={<QuizPage />} />
+              <Route path="/profile" element={<ProfilePage />} />
+              <Route path="/login" element={<StudentLogin />} />
+              <Route path="/payment" element={<StudentPayment />} />
+              
+              {/* Admin Routes */}
+              <Route path="/admin/login" element={<AdminLogin />} />
+              <Route path="/admin" element={<AdminLayout />}>
+                <Route index element={<AdminDashboard />} />
+                <Route path="courses" element={<AdminCourses />} />
+                <Route path="students" element={<AdminStudents />} />
+                <Route path="quizzes" element={<AdminQuizzes />} />
+                <Route path="payments" element={<AdminPayments />} />
+                <Route path="certificates" element={<AdminCertificates />} />
+              </Route>
+              
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </StudentProvider>
       </AdminProvider>
     </TooltipProvider>
   </QueryClientProvider>

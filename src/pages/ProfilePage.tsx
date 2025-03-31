@@ -1,97 +1,144 @@
 
-import React from 'react';
-import { User, Award, Bookmark, Settings, LogOut } from 'lucide-react';
-import BottomNav from '@/components/BottomNav';
+import React, { useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useStudent } from '@/contexts/StudentContext';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { CreditCard, Award, LogOut } from 'lucide-react';
 
 const ProfilePage = () => {
+  const { isAuthenticated, username, studentId, expiryDate, logout } = useStudent();
+  const navigate = useNavigate();
+  
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/login');
+    }
+  }, [isAuthenticated, navigate]);
+  
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
+  
+  if (!isAuthenticated) {
+    return null;
+  }
+  
+  // Check if subscription is active
+  const isSubscriptionActive = expiryDate && new Date(expiryDate) > new Date();
+  
   return (
-    <div className="pb-20 min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white p-4 shadow-sm">
-        <h1 className="text-xl font-bold flex items-center justify-center gap-2">
-          <User size={20} className="text-blue-500" />
-          My Profile
-        </h1>
-      </header>
-
-      {/* Profile Info */}
-      <div className="p-4">
-        <div className="bg-white rounded-xl border p-6 text-center">
-          <div className="w-24 h-24 bg-blue-100 rounded-full mx-auto flex items-center justify-center">
-            <User size={40} className="text-blue-500" />
-          </div>
-          <h2 className="text-xl font-bold mt-4">Alex Johnson</h2>
-          <p className="text-gray-500">Student</p>
-          <p className="text-sm text-blue-500 mt-1">alex.j@example.com</p>
+    <div className="container mx-auto p-4 py-8">
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-2xl font-bold">My Profile</h1>
+        <Button variant="outline" onClick={handleLogout}>
+          <LogOut className="h-4 w-4 mr-2" /> Logout
+        </Button>
+      </div>
+      
+      <div className="grid md:grid-cols-3 gap-6">
+        <div className="md:col-span-2 space-y-6">
+          <Card className="p-6">
+            <h2 className="text-xl font-semibold mb-4">Personal Information</h2>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-gray-500">Username</p>
+                  <p className="font-medium">{username}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Student ID</p>
+                  <p className="font-medium">{studentId}</p>
+                </div>
+              </div>
+            </div>
+          </Card>
           
-          <div className="mt-6 grid grid-cols-2 gap-4">
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <h3 className="font-bold text-2xl">3</h3>
-              <p className="text-sm text-gray-500">Courses</p>
+          <Card className="p-6">
+            <h2 className="text-xl font-semibold mb-4">Subscription Status</h2>
+            <div className="space-y-4">
+              <div className="flex items-center gap-4">
+                <div className={`h-16 w-16 rounded-full flex items-center justify-center ${isSubscriptionActive ? 'bg-green-100 text-green-600' : 'bg-amber-100 text-amber-600'}`}>
+                  <CreditCard size={28} />
+                </div>
+                <div>
+                  <h3 className="font-medium text-lg">
+                    {isSubscriptionActive ? 'Active Subscription' : 'No Active Subscription'}
+                  </h3>
+                  {isSubscriptionActive ? (
+                    <p className="text-gray-600">Your subscription is active until {expiryDate}</p>
+                  ) : (
+                    <p className="text-gray-600">You don't have an active subscription. Please make a payment to access courses.</p>
+                  )}
+                </div>
+              </div>
+              
+              {!isSubscriptionActive && (
+                <Button asChild className="w-full mt-4 bg-orange-500 hover:bg-orange-600">
+                  <Link to="/payment">
+                    <CreditCard className="h-4 w-4 mr-2" /> Make Payment
+                  </Link>
+                </Button>
+              )}
             </div>
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <h3 className="font-bold text-2xl">2</h3>
-              <p className="text-sm text-gray-500">Certificates</p>
+          </Card>
+          
+          <Card className="p-6">
+            <h2 className="text-xl font-semibold mb-4">My Certificates</h2>
+            <div className="space-y-4">
+              <div className="text-center py-8">
+                <Award size={40} className="mx-auto text-gray-300 mb-2" />
+                <p className="text-gray-500">You haven't earned any certificates yet.</p>
+                <p className="text-gray-500 text-sm mt-1">Complete courses to earn certificates!</p>
+              </div>
+              
+              <Button asChild variant="outline" className="w-full">
+                <Link to="/certificates">
+                  <Award className="h-4 w-4 mr-2" /> View All Certificates
+                </Link>
+              </Button>
             </div>
-          </div>
+          </Card>
+        </div>
+        
+        <div className="space-y-6">
+          <Card className="p-6">
+            <h2 className="text-xl font-semibold mb-4">Learning Progress</h2>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-gray-600">Courses Enrolled</span>
+                <span className="font-medium">0</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-600">Courses Completed</span>
+                <span className="font-medium">0</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-600">Quizzes Completed</span>
+                <span className="font-medium">0</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-600">Average Score</span>
+                <span className="font-medium">-</span>
+              </div>
+              
+              <Button asChild variant="outline" className="w-full mt-4">
+                <Link to="/">
+                  Explore Courses
+                </Link>
+              </Button>
+            </div>
+          </Card>
+          
+          <Card className="p-6">
+            <h2 className="text-xl font-semibold mb-4">Recent Activity</h2>
+            <div className="space-y-4">
+              <p className="text-center text-gray-500 py-8">No recent activity</p>
+            </div>
+          </Card>
         </div>
       </div>
-
-      {/* Stats */}
-      <div className="p-4">
-        <h2 className="text-lg font-bold mb-4">My Progress</h2>
-        <div className="bg-white rounded-xl border p-4">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-medium">Total Points</h3>
-            <span className="text-xl font-bold text-orange-500">680</span>
-          </div>
-          
-          <div className="mb-4">
-            <div className="flex justify-between text-sm mb-1">
-              <span>Overall Completion</span>
-              <span>35%</span>
-            </div>
-            <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-              <div className="h-full bg-blue-500" style={{ width: "35%" }} />
-            </div>
-          </div>
-          
-          <div>
-            <div className="flex justify-between text-sm mb-1">
-              <span>Quiz Average</span>
-              <span>80%</span>
-            </div>
-            <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-              <div className="h-full bg-green-500" style={{ width: "80%" }} />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Menu */}
-      <div className="p-4">
-        <h2 className="text-lg font-bold mb-4">Account</h2>
-        <div className="bg-white rounded-xl border overflow-hidden">
-          <button className="flex items-center gap-3 p-4 w-full text-left border-b">
-            <Award size={20} className="text-blue-500" />
-            <span>My Achievements</span>
-          </button>
-          <button className="flex items-center gap-3 p-4 w-full text-left border-b">
-            <Bookmark size={20} className="text-orange-500" />
-            <span>Saved Content</span>
-          </button>
-          <button className="flex items-center gap-3 p-4 w-full text-left border-b">
-            <Settings size={20} className="text-gray-500" />
-            <span>Settings</span>
-          </button>
-          <button className="flex items-center gap-3 p-4 w-full text-left text-red-500">
-            <LogOut size={20} />
-            <span>Logout</span>
-          </button>
-        </div>
-      </div>
-
-      <BottomNav />
     </div>
   );
 };
