@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Play, Check, Clock } from 'lucide-react';
+import { Play, Check, Clock, Lock } from 'lucide-react';
 
 interface VideoCardProps {
   id: number;
@@ -10,6 +10,7 @@ interface VideoCardProps {
   completed: boolean;
   videoUrl: string;
   onPlay: () => void;
+  isLocked?: boolean;
 }
 
 const VideoCard = ({
@@ -20,6 +21,7 @@ const VideoCard = ({
   completed,
   videoUrl,
   onPlay,
+  isLocked = false,
 }: VideoCardProps) => {
   return (
     <div className="bg-white rounded-xl overflow-hidden shadow-sm border mb-3">
@@ -28,11 +30,15 @@ const VideoCard = ({
           <img src={thumbnail} alt={title} className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center">
             <div className="w-12 h-12 rounded-full bg-white bg-opacity-80 flex items-center justify-center">
-              <Play size={24} className="text-orange-500 ml-1" />
+              {isLocked ? (
+                <Lock size={24} className="text-orange-500" />
+              ) : (
+                <Play size={24} className="text-orange-500 ml-1" />
+              )}
             </div>
           </div>
         </div>
-        {completed && (
+        {completed && !isLocked && (
           <div className="absolute top-2 right-2 bg-green-500 text-white p-1 rounded-full">
             <Check size={16} />
           </div>
@@ -46,9 +52,20 @@ const VideoCard = ({
         </div>
         <button
           onClick={onPlay}
-          className="mt-3 w-full bg-orange-500 text-white rounded-lg py-2 font-medium transition-colors hover:bg-orange-600"
+          className={`mt-3 w-full ${
+            isLocked 
+              ? 'bg-gray-200 text-gray-700 flex items-center justify-center gap-1' 
+              : 'bg-orange-500 text-white hover:bg-orange-600'
+          } rounded-lg py-2 font-medium transition-colors`}
         >
-          {completed ? "Watch Again" : "Continue Watching"}
+          {isLocked ? (
+            <>
+              <Lock size={14} />
+              Unlock Lesson
+            </>
+          ) : (
+            completed ? "Watch Again" : "Continue Watching"
+          )}
         </button>
       </div>
     </div>
