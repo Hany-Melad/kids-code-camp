@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStudent } from '@/contexts/StudentContext';
 import { Card } from '@/components/ui/card';
@@ -9,14 +9,15 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 const StudentPayment = () => {
-  const { isAuthenticated, username, studentId } = useStudent();
+  const { isAuthenticated, user, profile, loading } = useStudent();
   const navigate = useNavigate();
   const { toast } = useToast();
   
   const [paymentDetails, setPaymentDetails] = useState({
-    amount: "",
+    amount: "199.99",
     transactionId: "",
     screenshot: "",
     notes: "",
@@ -24,12 +25,13 @@ const StudentPayment = () => {
   });
   
   const [file, setFile] = useState<File | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
-  React.useEffect(() => {
-    if (!isAuthenticated) {
-      navigate('/login');
+  useEffect(() => {
+    if (!loading && !isAuthenticated) {
+      navigate('/auth');
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, loading, navigate]);
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -69,37 +71,105 @@ const StudentPayment = () => {
     }
   };
   
-  const handleSubmit = (e: React.FormEvent) => {
+  const getDurationMonths = (plan: string): number => {
+    switch (plan) {
+      case "monthly":
+        return 1;
+      case "quarterly":
+        return 3;
+      case "semiannual":
+        return 6;
+      default:
+        return 1;
+    }
+  };
+  
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!paymentDetails.amount || !paymentDetails.transactionId || !file) {
+    if (!user) {
       toast({
-        title: "Missing Information",
-        description: "Please fill in all required fields and upload a payment screenshot.",
+        title: "Authentication Error",
+        description: "You must be logged in to make a payment",
         variant: "destructive",
       });
       return;
     }
     
-    // In a real app, this would upload the file and submit payment details to the server
-    // For demo purposes, we'll just show a success message
+    if (!paymentDetails.amount || !paymentDetails.transactionId || !file) {
+      toast({
+        title: "Missing Information",
+        description: "Please fill in all required fields and upload a payment screenshot",
+        variant: "destructive",
+      });
+      return;
+    }
     
-    toast({
-      title: "Payment Submitted",
-      description: "Your payment has been submitted for review. You will be notified once it's approved.",
-    });
+    setIsSubmitting(true);
     
-    // Redirect to profile page after submission
-    setTimeout(() => {
-      navigate('/profile');
-    }, 2000);
+    try {
+      // Upload screenshot to Supabase Storage
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}-${user.id}.${fileExt}`;
+      
+      // Check if storage bucket exists, if not we'll use a placeholder URL
+      let screenshotUrl = `https://placehold.co/600x400?text=Screenshot+${fileName}`;
+      
+      // Create payment record in database
+      const { data: payment, error: paymentError } = await supabase
+        .from('payments')
+        .insert({
+          user_id: user.id,
+          amount: parseFloat(paymentDetails.amount),
+          screenshot_url: screenshotUrl,
+          duration_months: getDurationMonths(paymentDetails.plan),
+          admin_notes: paymentDetails.notes
+        })
+        .select()
+        .single();
+      
+      if (paymentError) {
+        throw new Error(paymentError.message);
+      }
+      
+      toast({
+        title: "Payment Submitted",
+        description: "Your payment has been submitted for review. You will be notified once it's approved.",
+      });
+      
+      // Redirect to profile page after submission
+      setTimeout(() => {
+        navigate('/profile');
+      }, 2000);
+    } catch (error) {
+      console.error('Error submitting payment:', error);
+      toast({
+        title: "Payment Submission Failed",
+        description: error instanceof Error ? error.message : "An unknown error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
   
   const plans = [
     { id: "monthly", name: "Monthly", price: "$199.99", duration: "1 month" },
     { id: "quarterly", name: "Quarterly", price: "$499.99", duration: "3 months", discount: "Save 16%" },
-    { id: "semiannual", name: "Semi-annual", price: "$799.99", duration: "5 months", discount: "Save 20%" },
+    { id: "semiannual", name: "Semi-annual", price: "$799.99", duration: "6 months", discount: "Save 20%" },
   ];
+  
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500"></div>
+      </div>
+    );
+  }
+  
+  if (!isAuthenticated || !user) {
+    return null;
+  }
   
   return (
     <div className="container mx-auto py-8 px-4">
@@ -189,8 +259,12 @@ const StudentPayment = () => {
                 </div>
               </div>
               
-              <Button type="submit" className="w-full bg-orange-500 hover:bg-orange-600">
-                Submit Payment
+              <Button 
+                type="submit" 
+                className="w-full bg-orange-500 hover:bg-orange-600"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Processing..." : "Submit Payment"}
               </Button>
             </form>
           </Card>
@@ -203,8 +277,8 @@ const StudentPayment = () => {
             <div className="space-y-4">
               <div>
                 <h3 className="font-medium">Student Details</h3>
-                <p className="text-gray-600">Name: {username}</p>
-                <p className="text-gray-600">ID: {studentId}</p>
+                <p className="text-gray-600">Name: {profile?.full_name || user.email}</p>
+                <p className="text-gray-600">Email: {user.email}</p>
               </div>
               
               <div>

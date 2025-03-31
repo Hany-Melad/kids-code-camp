@@ -20,6 +20,7 @@ import AdminCertificates from "./pages/admin/AdminCertificates";
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminLayout from "./layouts/AdminLayout";
 import StudentLogin from "./pages/StudentLogin";
+import AuthPage from "./pages/AuthPage";
 import StudentPayment from "./pages/StudentPayment";
 import { AdminProvider } from "./contexts/AdminContext";
 import { StudentProvider } from "./contexts/StudentContext";
@@ -41,7 +42,8 @@ const App = () => (
               <Route path="/quizzes" element={<QuizzesPage />} />
               <Route path="/quiz/:id" element={<QuizPage />} />
               <Route path="/profile" element={<ProfilePage />} />
-              <Route path="/login" element={<StudentLogin />} />
+              <Route path="/login" element={<AuthPage />} />
+              <Route path="/auth" element={<AuthPage />} />
               <Route path="/payment" element={<StudentPayment />} />
               
               {/* Admin Routes */}

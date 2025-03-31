@@ -7,26 +7,34 @@ import { Button } from '@/components/ui/button';
 import { CreditCard, Award, LogOut } from 'lucide-react';
 
 const ProfilePage = () => {
-  const { isAuthenticated, username, studentId, expiryDate, logout } = useStudent();
+  const { isAuthenticated, user, profile, subscription, logout, loading } = useStudent();
   const navigate = useNavigate();
   
   useEffect(() => {
-    if (!isAuthenticated) {
-      navigate('/login');
+    if (!loading && !isAuthenticated) {
+      navigate('/auth');
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, loading, navigate]);
   
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     navigate('/');
   };
   
-  if (!isAuthenticated) {
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500"></div>
+      </div>
+    );
+  }
+  
+  if (!isAuthenticated || !user) {
     return null;
   }
   
   // Check if subscription is active
-  const isSubscriptionActive = expiryDate && new Date(expiryDate) > new Date();
+  const isSubscriptionActive = subscription && new Date(subscription.expiry_date) > new Date() && subscription.status === 'active';
   
   return (
     <div className="container mx-auto p-4 py-8">
@@ -44,12 +52,16 @@ const ProfilePage = () => {
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-sm text-gray-500">Username</p>
-                  <p className="font-medium">{username}</p>
+                  <p className="text-sm text-gray-500">Full Name</p>
+                  <p className="font-medium">{profile?.full_name || user.email}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Email</p>
+                  <p className="font-medium">{user.email}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Student ID</p>
-                  <p className="font-medium">{studentId}</p>
+                  <p className="font-medium">{profile?.student_id || 'Not assigned yet'}</p>
                 </div>
               </div>
             </div>
@@ -67,7 +79,7 @@ const ProfilePage = () => {
                     {isSubscriptionActive ? 'Active Subscription' : 'No Active Subscription'}
                   </h3>
                   {isSubscriptionActive ? (
-                    <p className="text-gray-600">Your subscription is active until {expiryDate}</p>
+                    <p className="text-gray-600">Your subscription is active until {new Date(subscription.expiry_date).toLocaleDateString()}</p>
                   ) : (
                     <p className="text-gray-600">You don't have an active subscription. Please make a payment to access courses.</p>
                   )}
